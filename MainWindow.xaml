@@ -53,16 +53,43 @@
     <Grid>
         <!-- Crosshair Container -->
         <Canvas x:Name="CrosshairCanvas" IsHitTestVisible="False">
-            <!-- Horizontal Line -->
-            <Rectangle x:Name="HorizontalLine" Fill="Lime" Width="20" Height="2" />
-            <!-- Vertical Line -->
-            <Rectangle x:Name="VerticalLine" Fill="Lime" Width="2" Height="20" />
+            <!-- Simple Crosshair (Default) -->
+            <Rectangle x:Name="HorizontalLine" Fill="Lime" Width="20" Height="2" Visibility="Visible" />
+            <Rectangle x:Name="VerticalLine" Fill="Lime" Width="2" Height="20" Visibility="Visible" />
+
+            <!-- VALORANT Crosshair Elements -->
+            <Rectangle x:Name="CenterDotOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="CenterDot" Fill="White" Visibility="Collapsed" />
+
+            <!-- Inner Lines Outlines -->
+            <Rectangle x:Name="InnerLeftOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerRightOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerTopOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerBottomOutline" Fill="Black" Visibility="Collapsed" />
+
+            <!-- Inner Lines -->
+            <Rectangle x:Name="InnerLeft" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerRight" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerTop" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="InnerBottom" Fill="White" Visibility="Collapsed" />
+
+            <!-- Outer Lines Outlines -->
+            <Rectangle x:Name="OuterLeftOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterRightOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterTopOutline" Fill="Black" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterBottomOutline" Fill="Black" Visibility="Collapsed" />
+
+            <!-- Outer Lines -->
+            <Rectangle x:Name="OuterLeft" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterRight" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterTop" Fill="White" Visibility="Collapsed" />
+            <Rectangle x:Name="OuterBottom" Fill="White" Visibility="Collapsed" />
         </Canvas>
 
         <!-- Settings Menu -->
         <Border x:Name="SettingsMenu" 
                 Visibility="Collapsed"
-                Width="240" 
+                Width="260" 
                 Background="#E61E1E1E" 
                 BorderBrush="#444444" 
                 BorderThickness="1" 
@@ -81,49 +108,114 @@
                            FontWeight="Bold" 
                            Margin="0,0,0,15" 
                            HorizontalAlignment="Center"/>
-                
-                <!-- Monitor Selection -->
-                <TextBlock Text="MONITOR" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="MonitorComboBox" SelectionChanged="MonitorComboBox_SelectionChanged"/>
 
-                <!-- Menu Position -->
-                <TextBlock Text="MENU POSITION" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="PositionComboBox" SelectionChanged="PositionComboBox_SelectionChanged">
-                    <ComboBoxItem Content="Top Right" Tag="TopRight" IsSelected="True"/>
-                    <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
-                    <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
-                    <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
-                    <ComboBoxItem Content="Center" Tag="Center"/>
-                </ComboBox>
+                <TabControl Background="Transparent" BorderThickness="0">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TabItem">
+                                        <Border Name="Border" BorderThickness="0,0,0,2" Margin="0,0,10,5">
+                                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="5,2"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="#007ACC" />
+                                                <Setter Property="Foreground" Value="White" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent" />
+                                                <Setter Property="Foreground" Value="#888888" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TabControl.Resources>
+                    
+                    <!-- General Settings -->
+                    <TabItem Header="GENERAL">
+                        <StackPanel>
+                            <!-- Monitor Selection -->
+                            <TextBlock Text="MONITOR" Style="{StaticResource SettingLabel}"/>
+                            <ComboBox x:Name="MonitorComboBox" SelectionChanged="MonitorComboBox_SelectionChanged"/>
 
-                <!-- Color -->
-                <TextBlock Text="CROSSHAIR COLOR" Style="{StaticResource SettingLabel}"/>
-                <ComboBox x:Name="ColorComboBox" SelectionChanged="ColorComboBox_SelectionChanged">
-                    <ComboBoxItem Content="Lime" Tag="Lime" IsSelected="True"/>
-                    <ComboBoxItem Content="Red" Tag="Red"/>
-                    <ComboBoxItem Content="Cyan" Tag="Cyan"/>
-                    <ComboBoxItem Content="White" Tag="White"/>
-                    <ComboBoxItem Content="Yellow" Tag="Yellow"/>
-                    <ComboBoxItem Content="Orange" Tag="Orange"/>
-                    <ComboBoxItem Content="Blue" Tag="Blue"/>
-                    <ComboBoxItem Content="Pink" Tag="Pink"/>
-                    <ComboBoxItem Content="Purple" Tag="Purple"/>
-                    <ComboBoxItem Content="Custom..." Tag="Custom"/>
-                </ComboBox>
+                            <!-- Menu Position -->
+                            <TextBlock Text="MENU POSITION" Style="{StaticResource SettingLabel}"/>
+                            <ComboBox x:Name="PositionComboBox" SelectionChanged="PositionComboBox_SelectionChanged">
+                                <ComboBoxItem Content="Top Right" Tag="TopRight" IsSelected="True"/>
+                                <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
+                                <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
+                                <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
+                                <ComboBoxItem Content="Center" Tag="Center"/>
+                            </ComboBox>
 
-                <!-- Size -->
-                <DockPanel Margin="0,10,0,0">
-                    <TextBlock Text="SIZE" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
-                    <TextBlock x:Name="SizeLabel" Text="20" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                </DockPanel>
-                <Slider x:Name="SizeSlider" Minimum="2" Maximum="100" Value="20" ValueChanged="SettingsChanged"/>
+                            <!-- Color -->
+                            <TextBlock Text="CROSSHAIR COLOR" Style="{StaticResource SettingLabel}"/>
+                            <ComboBox x:Name="ColorComboBox" SelectionChanged="ColorComboBox_SelectionChanged">
+                                <ComboBoxItem Content="Lime" Tag="Lime" IsSelected="True"/>
+                                <ComboBoxItem Content="Red" Tag="Red"/>
+                                <ComboBoxItem Content="Cyan" Tag="Cyan"/>
+                                <ComboBoxItem Content="White" Tag="White"/>
+                                <ComboBoxItem Content="Yellow" Tag="Yellow"/>
+                                <ComboBoxItem Content="Orange" Tag="Orange"/>
+                                <ComboBoxItem Content="Blue" Tag="Blue"/>
+                                <ComboBoxItem Content="Pink" Tag="Pink"/>
+                                <ComboBoxItem Content="Purple" Tag="Purple"/>
+                                <ComboBoxItem Content="Custom..." Tag="Custom"/>
+                            </ComboBox>
 
-                <!-- Thickness -->
-                <DockPanel Margin="0,5,0,0">
-                    <TextBlock Text="THICKNESS" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
-                    <TextBlock x:Name="ThicknessLabel" Text="2" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                </DockPanel>
-                <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" ValueChanged="SettingsChanged"/>
+                            <!-- Size -->
+                            <DockPanel Margin="0,10,0,0">
+                                <TextBlock Text="SIZE" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
+                                <TextBlock x:Name="SizeLabel" Text="20" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                            </DockPanel>
+                            <Slider x:Name="SizeSlider" Minimum="2" Maximum="100" Value="20" ValueChanged="SettingsChanged"/>
+
+                            <!-- Thickness -->
+                            <DockPanel Margin="0,5,0,0">
+                                <TextBlock Text="THICKNESS" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
+                                <TextBlock x:Name="ThicknessLabel" Text="2" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                            </DockPanel>
+                            <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" ValueChanged="SettingsChanged"/>
+                        </StackPanel>
+                    </TabItem>
+
+                    <!-- VALORANT Settings -->
+                    <TabItem Header="VALORANT">
+                        <StackPanel>
+                            <TextBlock Text="PROFILE CODE" Style="{StaticResource SettingLabel}"/>
+                            <TextBox x:Name="ValorantCodeBox" 
+                                     Background="#2D2D30" 
+                                     Foreground="White" 
+                                     BorderBrush="#3F3F46" 
+                                     Padding="5" 
+                                     Height="60" 
+                                     TextWrapping="Wrap" 
+                                     AcceptsReturn="True" 
+                                     FontSize="10"/>
+                            
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Content="Import" Click="ImportValorantCode_Click" Margin="0,0,5,0" Height="28"/>
+                                <Button Grid.Column="1" Content="Clear" Click="ClearValorantCode_Click" Margin="5,0,0,0" Height="28"/>
+                            </Grid>
+                            
+                            <Button Content="Copy Current Code" Click="CopyValorantCode_Click" Margin="0,10,0,0" Height="28"/>
+                            
+                            <TextBlock Text="Note: Overrides general settings" 
+                                       Foreground="#666666" 
+                                       FontSize="9" 
+                                       Margin="0,10,0,0" 
+                                       HorizontalAlignment="Center"
+                                       FontStyle="Italic"/>
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
 
                 <!-- Actions -->
                 <Button Content="Exit Application" 

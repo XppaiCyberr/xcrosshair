@@ -11,6 +11,7 @@ namespace xcrosshair
         public string Color { get; set; } = "Lime";
         public double Size { get; set; } = 20;
         public double Thickness { get; set; } = 2;
+        public string ValorantProfileCode { get; set; } = "";
 
         private static readonly string SettingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

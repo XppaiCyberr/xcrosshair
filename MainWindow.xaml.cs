@@ -48,6 +48,7 @@ namespace xcrosshair
         private IntPtr _hwnd;
         private bool _isLoaded = false;
         private CrosshairSettings _settings = new CrosshairSettings();
+        private ValorantProfile? _valorantProfile = null;
 
         public MainWindow()
         {
@@ -81,6 +82,12 @@ namespace xcrosshair
                         PositionComboBox.SelectedItem = item;
                         break;
                     }
+                }
+
+                if (!string.IsNullOrEmpty(_settings.ValorantProfileCode))
+                {
+                    ValorantCodeBox.Text = _settings.ValorantProfileCode;
+                    _valorantProfile = ValorantProfile.Parse(_settings.ValorantProfileCode);
                 }
             }
             catch (Exception ex)
@@ -342,8 +349,9 @@ namespace xcrosshair
             {
                 if (HorizontalLine == null || VerticalLine == null) return;
                 var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
-                HorizontalLine.Fill = new SolidColorBrush(color);
-                VerticalLine.Fill = new SolidColorBrush(color);
+                var brush = new SolidColorBrush(color);
+                HorizontalLine.Fill = brush;
+                VerticalLine.Fill = brush;
             } catch {}
         }
 
@@ -362,6 +370,21 @@ namespace xcrosshair
         {
             if (HorizontalLine == null || VerticalLine == null || CrosshairCanvas == null) return;
 
+            double width = this.ActualWidth > 0 ? this.ActualWidth : this.Width;
+            double height = this.ActualHeight > 0 ? this.ActualHeight : this.Height;
+            if (double.IsNaN(width) || width <= 0) return;
+
+            if (_valorantProfile != null)
+            {
+                RenderValorantCrosshair(width, height);
+                return;
+            }
+
+            // Simple Mode
+            HorizontalLine.Visibility = Visibility.Visible;
+            VerticalLine.Visibility = Visibility.Visible;
+            HideValorantElements();
+
             double size = SizeSlider.Value;
             double thickness = ThicknessSlider.Value;
 
@@ -373,11 +396,6 @@ namespace xcrosshair
             VerticalLine.Width = thickness;
             VerticalLine.Height = size;
 
-            double width = this.ActualWidth > 0 ? this.ActualWidth : this.Width;
-            double height = this.ActualHeight > 0 ? this.ActualHeight : this.Height;
-
-            if (double.IsNaN(width) || width <= 0) return;
-
             double centerX = width / 2;
             double centerY = height / 2;
 
@@ -386,6 +404,167 @@ namespace xcrosshair
 
             Canvas.SetLeft(VerticalLine, centerX - (thickness / 2));
             Canvas.SetTop(VerticalLine, centerY - (size / 2));
+        }
+
+        private void RenderValorantCrosshair(double screenWidth, double screenHeight)
+        {
+            if (_valorantProfile == null) return;
+
+            HorizontalLine.Visibility = Visibility.Collapsed;
+            VerticalLine.Visibility = Visibility.Collapsed;
+
+            var s = _valorantProfile.Primary;
+            var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_valorantProfile.GetColorHex());
+            var brush = new SolidColorBrush(color);
+            var outlineBrush = new SolidColorBrush(System.Windows.Media.Colors.Black) { Opacity = s.OutlineOpacity };
+            
+            double centerX = screenWidth / 2;
+            double centerY = screenHeight / 2;
+
+            // Center Dot
+            if (s.CenterDotEnabled)
+            {
+                CenterDot.Visibility = Visibility.Visible;
+                CenterDot.Width = s.CenterDotThickness;
+                CenterDot.Height = s.CenterDotThickness;
+                CenterDot.Fill = brush;
+                CenterDot.Opacity = s.CenterDotOpacity;
+                Canvas.SetLeft(CenterDot, centerX - (s.CenterDotThickness / 2.0));
+                Canvas.SetTop(CenterDot, centerY - (s.CenterDotThickness / 2.0));
+
+                if (s.OutlinesEnabled)
+                {
+                    CenterDotOutline.Visibility = Visibility.Visible;
+                    CenterDotOutline.Width = s.CenterDotThickness + (s.OutlineThickness * 2);
+                    CenterDotOutline.Height = s.CenterDotThickness + (s.OutlineThickness * 2);
+                    CenterDotOutline.Fill = outlineBrush;
+                    Canvas.SetLeft(CenterDotOutline, centerX - (CenterDotOutline.Width / 2.0));
+                    Canvas.SetTop(CenterDotOutline, centerY - (CenterDotOutline.Height / 2.0));
+                }
+                else CenterDotOutline.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                CenterDot.Visibility = Visibility.Collapsed;
+                CenterDotOutline.Visibility = Visibility.Collapsed;
+            }
+
+            // Inner Lines
+            RenderLines(s.InnerLines, centerX, centerY, brush, outlineBrush, s.OutlinesEnabled, s.OutlineThickness, 
+                InnerLeft, InnerRight, InnerTop, InnerBottom, 
+                InnerLeftOutline, InnerRightOutline, InnerTopOutline, InnerBottomOutline);
+
+            // Outer Lines
+            RenderLines(s.OuterLines, centerX, centerY, brush, outlineBrush, s.OutlinesEnabled, s.OutlineThickness, 
+                OuterLeft, OuterRight, OuterTop, OuterBottom, 
+                OuterLeftOutline, OuterRightOutline, OuterTopOutline, OuterBottomOutline);
+        }
+
+        private void RenderLines(ValorantProfile.LineSettings l, double centerX, double centerY, System.Windows.Media.Brush brush, System.Windows.Media.Brush outlineBrush, bool outlines, int outlineThickness,
+            System.Windows.Shapes.Rectangle left, System.Windows.Shapes.Rectangle right, System.Windows.Shapes.Rectangle top, System.Windows.Shapes.Rectangle bottom,
+            System.Windows.Shapes.Rectangle leftOut, System.Windows.Shapes.Rectangle rightOut, System.Windows.Shapes.Rectangle topOut, System.Windows.Shapes.Rectangle bottomOut)
+        {
+            if (!l.Show)
+            {
+                left.Visibility = right.Visibility = top.Visibility = bottom.Visibility = Visibility.Collapsed;
+                leftOut.Visibility = rightOut.Visibility = topOut.Visibility = bottomOut.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            left.Visibility = right.Visibility = top.Visibility = bottom.Visibility = Visibility.Visible;
+            left.Fill = right.Fill = top.Fill = bottom.Fill = brush;
+            left.Opacity = right.Opacity = top.Opacity = bottom.Opacity = l.Opacity;
+
+            double hLen = l.Length;
+            double vLen = l.IndependentLength ? l.VerticalLength : l.Length;
+            double thick = l.Thickness;
+            double off = l.Offset;
+
+            // Horizontal (Left/Right)
+            left.Width = right.Width = hLen;
+            left.Height = right.Height = thick;
+            Canvas.SetTop(left, centerY - (thick / 2.0));
+            Canvas.SetTop(right, centerY - (thick / 2.0));
+            Canvas.SetLeft(left, centerX - off - hLen);
+            Canvas.SetLeft(right, centerX + off);
+
+            // Vertical (Top/Bottom)
+            top.Width = bottom.Width = thick;
+            top.Height = bottom.Height = vLen;
+            Canvas.SetLeft(top, centerX - (thick / 2.0));
+            Canvas.SetLeft(bottom, centerX - (thick / 2.0));
+            Canvas.SetTop(top, centerY - off - vLen);
+            Canvas.SetTop(bottom, centerY + off);
+
+            if (outlines)
+            {
+                leftOut.Visibility = rightOut.Visibility = topOut.Visibility = bottomOut.Visibility = Visibility.Visible;
+                leftOut.Fill = rightOut.Fill = topOut.Fill = bottomOut.Fill = outlineBrush;
+
+                double outThick = thick + (outlineThickness * 2);
+                double outHLen = hLen + (outlineThickness * 2);
+                double outVLen = vLen + (outlineThickness * 2);
+
+                leftOut.Width = rightOut.Width = outHLen;
+                leftOut.Height = rightOut.Height = outThick;
+                Canvas.SetTop(leftOut, centerY - (outThick / 2.0));
+                Canvas.SetTop(rightOut, centerY - (outThick / 2.0));
+                Canvas.SetLeft(leftOut, centerX - off - hLen - outlineThickness);
+                Canvas.SetLeft(rightOut, centerX + off - outlineThickness);
+
+                topOut.Width = bottomOut.Width = outThick;
+                topOut.Height = bottomOut.Height = outVLen;
+                Canvas.SetLeft(topOut, centerX - (outThick / 2.0));
+                Canvas.SetLeft(bottomOut, centerX - (outThick / 2.0));
+                Canvas.SetTop(topOut, centerY - off - vLen - outlineThickness);
+                Canvas.SetTop(bottomOut, centerY + off - outlineThickness);
+            }
+            else
+            {
+                leftOut.Visibility = rightOut.Visibility = topOut.Visibility = bottomOut.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void HideValorantElements()
+        {
+            CenterDot.Visibility = CenterDotOutline.Visibility = Visibility.Collapsed;
+            InnerLeft.Visibility = InnerRight.Visibility = InnerTop.Visibility = InnerBottom.Visibility = Visibility.Collapsed;
+            InnerLeftOutline.Visibility = InnerRightOutline.Visibility = InnerTopOutline.Visibility = InnerBottomOutline.Visibility = Visibility.Collapsed;
+            OuterLeft.Visibility = OuterRight.Visibility = OuterTop.Visibility = OuterBottom.Visibility = Visibility.Collapsed;
+            OuterLeftOutline.Visibility = OuterRightOutline.Visibility = OuterTopOutline.Visibility = OuterBottomOutline.Visibility = Visibility.Collapsed;
+        }
+
+        private void ImportValorantCode_Click(object sender, RoutedEventArgs e)
+        {
+            string code = ValorantCodeBox.Text.Trim();
+            if (string.IsNullOrEmpty(code)) return;
+
+            _valorantProfile = ValorantProfile.Parse(code);
+            _settings.ValorantProfileCode = code;
+            _settings.Save();
+            UpdateCrosshairLayout();
+        }
+
+        private void ClearValorantCode_Click(object sender, RoutedEventArgs e)
+        {
+            _valorantProfile = null;
+            _settings.ValorantProfileCode = "";
+            ValorantCodeBox.Text = "";
+            _settings.Save();
+            UpdateCrosshairLayout();
+        }
+
+        private void CopyValorantCode_Click(object sender, RoutedEventArgs e)
+        {
+            if (_valorantProfile != null)
+            {
+                System.Windows.Clipboard.SetText(_valorantProfile.ToCode());
+            }
+            else
+            {
+                // Optionally generate a code from simple settings, but VALORANT format is complex.
+                // For now, just alert or do nothing.
+            }
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
