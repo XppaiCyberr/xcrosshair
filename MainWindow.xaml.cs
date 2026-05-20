@@ -125,15 +125,29 @@ namespace xcrosshair
             if (SettingsMenu == null) return;
             if (PositionComboBox.SelectedItem is ComboBoxItem item)
             {
-                if (item.Tag.ToString() == "TopRight")
+                string position = item.Tag.ToString();
+                switch (position)
                 {
-                    SettingsMenu.VerticalAlignment = VerticalAlignment.Top;
-                    SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
-                }
-                else
-                {
-                    SettingsMenu.VerticalAlignment = VerticalAlignment.Center;
-                    SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+                    case "TopRight":
+                        SettingsMenu.VerticalAlignment = VerticalAlignment.Top;
+                        SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
+                        break;
+                    case "TopLeft":
+                        SettingsMenu.VerticalAlignment = VerticalAlignment.Top;
+                        SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                        break;
+                    case "BottomRight":
+                        SettingsMenu.VerticalAlignment = VerticalAlignment.Bottom;
+                        SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Right;
+                        break;
+                    case "BottomLeft":
+                        SettingsMenu.VerticalAlignment = VerticalAlignment.Bottom;
+                        SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                        break;
+                    case "Center":
+                        SettingsMenu.VerticalAlignment = VerticalAlignment.Center;
+                        SettingsMenu.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+                        break;
                 }
             }
         }
@@ -179,6 +193,11 @@ namespace xcrosshair
 
             Canvas.SetLeft(VerticalLine, centerX - (thickness / 2));
             Canvas.SetTop(VerticalLine, centerY - (size / 2));
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Application.Current.Shutdown();
         }
 
         protected override void OnClosed(EventArgs e)

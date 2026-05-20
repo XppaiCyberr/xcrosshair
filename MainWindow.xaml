@@ -40,6 +40,9 @@
                 <TextBlock Text="Menu Position" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
                 <ComboBox x:Name="PositionComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="PositionComboBox_SelectionChanged">
                     <ComboBoxItem Content="Top Right" Tag="TopRight" IsSelected="True"/>
+                    <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
+                    <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
+                    <ComboBoxItem Content="Bottom Left" Tag="BottomLeft"/>
                     <ComboBoxItem Content="Center" Tag="Center"/>
                 </ComboBox>
 
@@ -61,7 +64,22 @@
                 <TextBlock x:Name="ThicknessLabel" Text="Thickness: 2" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
                 <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" Margin="0,0,0,10" ValueChanged="SettingsChanged"/>
 
-                <TextBlock Text="Press [Home] to Hide" Foreground="#666666" FontSize="10" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+                <!-- Actions -->
+                <Button Content="Exit Application" 
+                        Background="#442222" 
+                        Foreground="White" 
+                        BorderThickness="0" 
+                        Padding="5" 
+                        Margin="0,10,0,0" 
+                        Click="ExitButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="3"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <TextBlock Text="Press [Home] to Hide" Foreground="#666666" FontSize="10" Margin="0,10,0,0" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
     </Grid>
