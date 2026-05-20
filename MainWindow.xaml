@@ -1,0 +1,68 @@
+<Window x:Class="xcrosshair.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="xcrosshair" 
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Loaded="Window_Loaded">
+    <Grid>
+        <!-- Crosshair Container -->
+        <Canvas x:Name="CrosshairCanvas" IsHitTestVisible="False">
+            <!-- Horizontal Line -->
+            <Rectangle x:Name="HorizontalLine" Fill="Lime" Width="20" Height="2" />
+            <!-- Vertical Line -->
+            <Rectangle x:Name="VerticalLine" Fill="Lime" Width="2" Height="20" />
+        </Canvas>
+
+        <!-- Settings Menu -->
+        <Border x:Name="SettingsMenu" 
+                Visibility="Collapsed"
+                Width="220" 
+                Background="#222222" 
+                BorderBrush="#444444" 
+                BorderThickness="1" 
+                CornerRadius="5"
+                VerticalAlignment="Top" 
+                HorizontalAlignment="Right"
+                Margin="20"
+                Padding="15">
+            <StackPanel>
+                <TextBlock Text="SETTINGS" Foreground="White" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                
+                <!-- Monitor Selection -->
+                <TextBlock Text="Monitor" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
+                <ComboBox x:Name="MonitorComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="MonitorComboBox_SelectionChanged"/>
+
+                <!-- Menu Position -->
+                <TextBlock Text="Menu Position" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
+                <ComboBox x:Name="PositionComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="PositionComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Top Right" Tag="TopRight" IsSelected="True"/>
+                    <ComboBoxItem Content="Center" Tag="Center"/>
+                </ComboBox>
+
+                <!-- Color -->
+                <TextBlock Text="Color" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
+                <ComboBox x:Name="ColorComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="ColorComboBox_SelectionChanged">
+                    <ComboBoxItem Content="Lime" Tag="Lime" IsSelected="True"/>
+                    <ComboBoxItem Content="Red" Tag="Red"/>
+                    <ComboBoxItem Content="Cyan" Tag="Cyan"/>
+                    <ComboBoxItem Content="White" Tag="White"/>
+                    <ComboBoxItem Content="Yellow" Tag="Yellow"/>
+                </ComboBox>
+
+                <!-- Size -->
+                <TextBlock x:Name="SizeLabel" Text="Size: 20" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
+                <Slider x:Name="SizeSlider" Minimum="2" Maximum="100" Value="20" Margin="0,0,0,10" ValueChanged="SettingsChanged"/>
+
+                <!-- Thickness -->
+                <TextBlock x:Name="ThicknessLabel" Text="Thickness: 2" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
+                <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" Margin="0,0,0,10" ValueChanged="SettingsChanged"/>
+
+                <TextBlock Text="Press [Home] to Hide" Foreground="#666666" FontSize="10" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
