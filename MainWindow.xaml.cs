@@ -45,7 +45,7 @@ namespace xcrosshair
             _hwnd = new WindowInteropHelper(this).Handle;
             RegisterHotKey(_hwnd, HOTKEY_ID, 0, VK_HOME);
             
-            MoveToMonitor(Screen.PrimaryScreen);
+            MoveToMonitor(Screen.PrimaryScreen!);
             EnableClickThrough();
 
             ComponentDispatcher.ThreadFilterMessage += ComponentDispatcher_ThreadFilterMessage;
@@ -123,9 +123,9 @@ namespace xcrosshair
         private void PositionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SettingsMenu == null) return;
-            if (PositionComboBox.SelectedItem is ComboBoxItem item)
+            if (PositionComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
-                string position = item.Tag.ToString();
+                string position = item.Tag.ToString() ?? "TopRight";
                 switch (position)
                 {
                     case "TopRight":
@@ -155,9 +155,9 @@ namespace xcrosshair
         private void ColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (HorizontalLine == null || VerticalLine == null) return;
-            if (ColorComboBox.SelectedItem is ComboBoxItem item)
+            if (ColorComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
-                var colorStr = item.Tag.ToString();
+                var colorStr = item.Tag.ToString() ?? "Lime";
                 var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
                 HorizontalLine.Fill = new SolidColorBrush(color);
                 VerticalLine.Fill = new SolidColorBrush(color);
