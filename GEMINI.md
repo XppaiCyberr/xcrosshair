@@ -17,7 +17,7 @@ A minimalist, high-performance crosshair overlay for Windows built with C# and W
 
 *   **`MainWindow.xaml / MainWindow.xaml.cs`:** The core of the application. Handles the overlay window, the settings UI (menu), global hotkey registration, and Win32 interop for window styling.
 *   **`CrosshairSettings.cs`:** Manages user preferences. Now supports **multiple profiles**. Settings are persisted to `%AppData%\xcrosshair\settings.json`.
-*   **`ValorantProfile.cs`:** Logic for parsing and applying crosshair settings from Valorant profile codes.
+*   **`ValorantProfile.cs`:** Logic for parsing and applying crosshair settings from Valorant profile codes. Features an enhanced v2 parser with improved token mapping and RGBA-to-ARGB color conversion for accurate rendering.
 
 ## Features: Profiles
 

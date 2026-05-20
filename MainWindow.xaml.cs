@@ -508,7 +508,7 @@ namespace xcrosshair
             left.Opacity = right.Opacity = top.Opacity = bottom.Opacity = l.Opacity;
 
             double hLen = l.Length;
-            double vLen = l.IndependentLength ? l.VerticalLength : l.Length;
+            double vLen = l.Length;
             double thick = l.Thickness;
             double off = l.Offset;
 

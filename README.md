@@ -31,6 +31,11 @@ A minimalist, high-performance crosshair overlay for Windows built with C# and W
 
 ## Changelog
 
+### v1.4.0
+- **Enhanced VALORANT Profile Support**: Completely rewritten parser for better compatibility with modern VALORANT crosshair codes.
+- **Accurate Colors**: Improved color mapping and support for VALORANT's RGBA hex format (automatic conversion to ARGB).
+- **Refined Rendering Engine**: Simplified line rendering for improved performance and consistency.
+
 ### v1.3.0
 - **Multi-Profile Management**: Create, save, and switch between multiple crosshair configurations.
 - **Save As/Clone**: Easily duplicate existing profiles.
