@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,25 +47,110 @@ namespace xcrosshair
 
         private IntPtr _hwnd;
         private bool _isLoaded = false;
+        private CrosshairSettings _settings = new CrosshairSettings();
 
         public MainWindow()
         {
             InitializeComponent();
-            PopulateMonitors();
+        }
+
+        private void LogError(string context, Exception ex)
+        {
+            try 
+            {
+                string logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log");
+                System.IO.File.AppendAllText(logPath, $"[{DateTime.Now}] Error in {context}: {ex.Message}\n{ex.StackTrace}\n\n");
+            } catch {}
+        }
+
+        private void ApplySettings()
+        {
+            try 
+            {
+                if (SizeSlider == null || ThicknessSlider == null || PositionComboBox == null) return;
+
+                SizeSlider.Value = _settings.Size;
+                ThicknessSlider.Value = _settings.Thickness;
+
+                UpdateColorSelectionInUI();
+
+                foreach (ComboBoxItem item in PositionComboBox.Items)
+                {
+                    if (item.Tag?.ToString() == _settings.MenuPosition)
+                    {
+                        PositionComboBox.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("ApplySettings", ex);
+            }
+        }
+
+        private void UpdateColorSelectionInUI()
+        {
+            try 
+            {
+                if (ColorComboBox == null) return;
+
+                bool found = false;
+                foreach (ComboBoxItem item in ColorComboBox.Items)
+                {
+                    if (item.Tag?.ToString() == _settings.Color)
+                    {
+                        ColorComboBox.SelectedItem = item;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found && !string.IsNullOrEmpty(_settings.Color) && _settings.Color.StartsWith("#"))
+                {
+                    var customItem = new ComboBoxItem { Content = $"Custom ({_settings.Color})", Tag = _settings.Color };
+                    int insertIndex = Math.Max(0, ColorComboBox.Items.Count - 1);
+                    ColorComboBox.Items.Insert(insertIndex, customItem);
+                    ColorComboBox.SelectedItem = customItem;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("UpdateColorSelectionInUI", ex);
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            _hwnd = new WindowInteropHelper(this).Handle;
-            RegisterHotKey(_hwnd, HOTKEY_ID, 0, VK_HOME);
-            
-            // Move to primary monitor initially
-            MoveToMonitor(Screen.PrimaryScreen!);
-            EnableClickThrough();
+            try 
+            {
+                _hwnd = new WindowInteropHelper(this).Handle;
+                RegisterHotKey(_hwnd, HOTKEY_ID, 0, VK_HOME);
+                
+                _settings = CrosshairSettings.Load();
+                PopulateMonitors();
+                ApplySettings();
 
-            ComponentDispatcher.ThreadFilterMessage += ComponentDispatcher_ThreadFilterMessage;
-            _isLoaded = true;
-            UpdateCrosshairLayout();
+                if (_settings.MonitorIndex >= 0 && _settings.MonitorIndex < Screen.AllScreens.Length)
+                {
+                    MonitorComboBox.SelectedIndex = _settings.MonitorIndex;
+                    MoveToMonitor(Screen.AllScreens[_settings.MonitorIndex]);
+                }
+                else
+                {
+                    MoveToMonitor(Screen.PrimaryScreen!);
+                }
+
+                EnableClickThrough();
+
+                ComponentDispatcher.ThreadFilterMessage += ComponentDispatcher_ThreadFilterMessage;
+                _isLoaded = true;
+                UpdateCrosshairLayout();
+            }
+            catch (Exception ex)
+            {
+                LogError("Window_Loaded", ex);
+            }
         }
 
         private void ComponentDispatcher_ThreadFilterMessage(ref MSG msg, ref bool handled)
@@ -96,8 +182,6 @@ namespace xcrosshair
             if (_hwnd == IntPtr.Zero) return;
             int extendedStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
             SetWindowLong(_hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TRANSPARENT | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST);
-            
-            // Force topmost and ensure no activation
             SetWindowPos(_hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
 
@@ -105,55 +189,69 @@ namespace xcrosshair
         {
             if (_hwnd == IntPtr.Zero) return;
             int extendedStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
-            // Remove transparent and noactivate, but keep toolwindow and topmost
             SetWindowLong(_hwnd, GWL_EXSTYLE, (extendedStyle & ~WS_EX_TRANSPARENT) & ~WS_EX_NOACTIVATE);
         }
 
         private void PopulateMonitors()
         {
-            var screens = Screen.AllScreens;
-            for (int i = 0; i < screens.Length; i++)
+            try 
             {
-                MonitorComboBox.Items.Add(new ComboBoxItem 
-                { 
-                    Content = $"Monitor {i + 1} ({(screens[i].Primary ? "Primary" : "Secondary")})",
-                    Tag = screens[i]
-                });
+                var screens = Screen.AllScreens;
+                MonitorComboBox.Items.Clear();
+                for (int i = 0; i < screens.Length; i++)
+                {
+                    MonitorComboBox.Items.Add(new ComboBoxItem 
+                    { 
+                        Content = $"Monitor {i + 1} ({(screens[i].Primary ? "Primary" : "Secondary")})",
+                        Tag = screens[i]
+                    });
+                }
             }
-            MonitorComboBox.SelectedIndex = 0;
+            catch (Exception ex)
+            {
+                LogError("PopulateMonitors", ex);
+            }
         }
 
         private void MonitorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (MonitorComboBox.SelectedItem is ComboBoxItem item && item.Tag is Screen screen)
             {
+                _settings.MonitorIndex = MonitorComboBox.SelectedIndex;
+                _settings.Save();
                 MoveToMonitor(screen);
             }
         }
 
         private void MoveToMonitor(Screen screen)
         {
-            if (_hwnd == IntPtr.Zero)
+            try 
             {
-                // Fallback for before window is loaded
-                this.Left = screen.Bounds.Left;
-                this.Top = screen.Bounds.Top;
-                this.Width = screen.Bounds.Width;
-                this.Height = screen.Bounds.Height;
-                return;
+                if (screen == null) return;
+
+                if (_hwnd == IntPtr.Zero)
+                {
+                    this.Left = screen.Bounds.Left;
+                    this.Top = screen.Bounds.Top;
+                    this.Width = screen.Bounds.Width;
+                    this.Height = screen.Bounds.Height;
+                    return;
+                }
+
+                SetWindowPos(_hwnd, HWND_TOPMOST, screen.Bounds.Left, screen.Bounds.Top, screen.Bounds.Width, screen.Bounds.Height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+                var dpi = VisualTreeHelper.GetDpi(this);
+                this.Left = screen.Bounds.Left / dpi.DpiScaleX;
+                this.Top = screen.Bounds.Top / dpi.DpiScaleY;
+                this.Width = screen.Bounds.Width / dpi.DpiScaleX;
+                this.Height = screen.Bounds.Height / dpi.DpiScaleY;
+
+                if (_isLoaded) UpdateCrosshairLayout();
             }
-
-            // Use SetWindowPos for pixel-perfect positioning on the monitor
-            SetWindowPos(_hwnd, HWND_TOPMOST, screen.Bounds.Left, screen.Bounds.Top, screen.Bounds.Width, screen.Bounds.Height, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-
-            // Update WPF properties with DPI scaling awareness
-            var dpi = VisualTreeHelper.GetDpi(this);
-            this.Left = screen.Bounds.Left / dpi.DpiScaleX;
-            this.Top = screen.Bounds.Top / dpi.DpiScaleY;
-            this.Width = screen.Bounds.Width / dpi.DpiScaleX;
-            this.Height = screen.Bounds.Height / dpi.DpiScaleY;
-
-            if (_isLoaded) UpdateCrosshairLayout();
+            catch (Exception ex)
+            {
+                LogError("MoveToMonitor", ex);
+            }
         }
 
         private void PositionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -162,6 +260,13 @@ namespace xcrosshair
             if (PositionComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
                 string position = item.Tag.ToString() ?? "TopRight";
+                
+                if (_isLoaded)
+                {
+                    _settings.MenuPosition = position;
+                    _settings.Save();
+                }
+
                 switch (position)
                 {
                     case "TopRight":
@@ -193,16 +298,63 @@ namespace xcrosshair
             if (HorizontalLine == null || VerticalLine == null) return;
             if (ColorComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
-                var colorStr = item.Tag.ToString() ?? "Lime";
+                var tag = item.Tag.ToString();
+                if (tag == "Custom")
+                {
+                    using (var dialog = new System.Windows.Forms.ColorDialog())
+                    {
+                        try 
+                        {
+                            var currentColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.Color);
+                            dialog.Color = System.Drawing.Color.FromArgb(currentColor.A, currentColor.R, currentColor.G, currentColor.B);
+                        } catch {}
+
+                        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                        {
+                            var color = dialog.Color;
+                            string hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+                            _settings.Color = hex;
+                            _settings.Save();
+                            
+                            UpdateColorSelectionInUI();
+                            ApplyColor(hex);
+                        }
+                        else
+                        {
+                            UpdateColorSelectionInUI();
+                        }
+                    }
+                    return;
+                }
+
+                if (_isLoaded)
+                {
+                    _settings.Color = tag ?? "Lime";
+                    _settings.Save();
+                }
+                ApplyColor(_settings.Color);
+            }
+        }
+
+        private void ApplyColor(string colorStr)
+        {
+            try 
+            {
+                if (HorizontalLine == null || VerticalLine == null) return;
                 var color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(colorStr);
                 HorizontalLine.Fill = new SolidColorBrush(color);
                 VerticalLine.Fill = new SolidColorBrush(color);
-            }
+            } catch {}
         }
 
         private void SettingsChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (!_isLoaded) return;
+
+            _settings.Size = SizeSlider.Value;
+            _settings.Thickness = ThicknessSlider.Value;
+            _settings.Save();
+
             UpdateCrosshairLayout();
         }
 
@@ -213,15 +365,14 @@ namespace xcrosshair
             double size = SizeSlider.Value;
             double thickness = ThicknessSlider.Value;
 
-            SizeLabel.Text = $"Size: {(int)size}";
-            ThicknessLabel.Text = $"Thickness: {(int)thickness}";
+            SizeLabel.Text = $"{(int)size}";
+            ThicknessLabel.Text = $"{(int)thickness}";
 
             HorizontalLine.Width = size;
             HorizontalLine.Height = thickness;
             VerticalLine.Width = thickness;
             VerticalLine.Height = size;
 
-            // Use ActualWidth/Height for more accurate centering if available
             double width = this.ActualWidth > 0 ? this.ActualWidth : this.Width;
             double height = this.ActualHeight > 0 ? this.ActualHeight : this.Height;
 

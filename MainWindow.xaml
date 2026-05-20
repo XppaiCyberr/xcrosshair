@@ -8,6 +8,48 @@
         Topmost="True"
         ShowInTaskbar="False"
         Loaded="Window_Loaded">
+    <Window.Resources>
+        <!-- Dark Theme Colors -->
+        <Color x:Key="BackgroundColor">#1E1E1E</Color>
+        <Color x:Key="BorderColor">#333333</Color>
+        <Color x:Key="AccentColor">#007ACC</Color>
+        <Color x:Key="TextColor">#CCCCCC</Color>
+        <Color x:Key="HeaderTextColor">#FFFFFF</Color>
+
+        <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+        <SolidColorBrush x:Key="HeaderTextBrush" Color="{StaticResource HeaderTextColor}" />
+
+        <!-- ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#2D2D30" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#3F3F46" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="5,3" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Style.Resources>
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#2D2D30" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#3E3E42" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="White" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White" />
+            </Style.Resources>
+        </Style>
+
+        <!-- Slider Style -->
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="0,5" />
+        </Style>
+
+        <!-- Label Style -->
+        <Style x:Key="SettingLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#999999" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="0,10,0,2" />
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <!-- Crosshair Container -->
         <Canvas x:Name="CrosshairCanvas" IsHitTestVisible="False">
@@ -20,25 +62,33 @@
         <!-- Settings Menu -->
         <Border x:Name="SettingsMenu" 
                 Visibility="Collapsed"
-                Width="220" 
-                Background="#222222" 
+                Width="240" 
+                Background="#E61E1E1E" 
                 BorderBrush="#444444" 
                 BorderThickness="1" 
-                CornerRadius="5"
+                CornerRadius="8"
                 VerticalAlignment="Top" 
                 HorizontalAlignment="Right"
                 Margin="20"
-                Padding="15">
+                Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Opacity="0.5" ShadowDepth="0"/>
+            </Border.Effect>
             <StackPanel>
-                <TextBlock Text="SETTINGS" Foreground="White" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                <TextBlock Text="SETTINGS" 
+                           Foreground="White" 
+                           FontSize="14"
+                           FontWeight="Bold" 
+                           Margin="0,0,0,15" 
+                           HorizontalAlignment="Center"/>
                 
                 <!-- Monitor Selection -->
-                <TextBlock Text="Monitor" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
-                <ComboBox x:Name="MonitorComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="MonitorComboBox_SelectionChanged"/>
+                <TextBlock Text="MONITOR" Style="{StaticResource SettingLabel}"/>
+                <ComboBox x:Name="MonitorComboBox" SelectionChanged="MonitorComboBox_SelectionChanged"/>
 
                 <!-- Menu Position -->
-                <TextBlock Text="Menu Position" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
-                <ComboBox x:Name="PositionComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="PositionComboBox_SelectionChanged">
+                <TextBlock Text="MENU POSITION" Style="{StaticResource SettingLabel}"/>
+                <ComboBox x:Name="PositionComboBox" SelectionChanged="PositionComboBox_SelectionChanged">
                     <ComboBoxItem Content="Top Right" Tag="TopRight" IsSelected="True"/>
                     <ComboBoxItem Content="Top Left" Tag="TopLeft"/>
                     <ComboBoxItem Content="Bottom Right" Tag="BottomRight"/>
@@ -47,39 +97,56 @@
                 </ComboBox>
 
                 <!-- Color -->
-                <TextBlock Text="Color" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
-                <ComboBox x:Name="ColorComboBox" Background="#333333" Foreground="White" Margin="0,0,0,10" SelectionChanged="ColorComboBox_SelectionChanged">
+                <TextBlock Text="CROSSHAIR COLOR" Style="{StaticResource SettingLabel}"/>
+                <ComboBox x:Name="ColorComboBox" SelectionChanged="ColorComboBox_SelectionChanged">
                     <ComboBoxItem Content="Lime" Tag="Lime" IsSelected="True"/>
                     <ComboBoxItem Content="Red" Tag="Red"/>
                     <ComboBoxItem Content="Cyan" Tag="Cyan"/>
                     <ComboBoxItem Content="White" Tag="White"/>
                     <ComboBoxItem Content="Yellow" Tag="Yellow"/>
+                    <ComboBoxItem Content="Orange" Tag="Orange"/>
+                    <ComboBoxItem Content="Blue" Tag="Blue"/>
+                    <ComboBoxItem Content="Pink" Tag="Pink"/>
+                    <ComboBoxItem Content="Purple" Tag="Purple"/>
+                    <ComboBoxItem Content="Custom..." Tag="Custom"/>
                 </ComboBox>
 
                 <!-- Size -->
-                <TextBlock x:Name="SizeLabel" Text="Size: 20" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
-                <Slider x:Name="SizeSlider" Minimum="2" Maximum="100" Value="20" Margin="0,0,0,10" ValueChanged="SettingsChanged"/>
+                <DockPanel Margin="0,10,0,0">
+                    <TextBlock Text="SIZE" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
+                    <TextBlock x:Name="SizeLabel" Text="20" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                </DockPanel>
+                <Slider x:Name="SizeSlider" Minimum="2" Maximum="100" Value="20" ValueChanged="SettingsChanged"/>
 
                 <!-- Thickness -->
-                <TextBlock x:Name="ThicknessLabel" Text="Thickness: 2" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,2"/>
-                <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" Margin="0,0,0,10" ValueChanged="SettingsChanged"/>
+                <DockPanel Margin="0,5,0,0">
+                    <TextBlock Text="THICKNESS" Style="{StaticResource SettingLabel}" DockPanel.Dock="Left" Margin="0"/>
+                    <TextBlock x:Name="ThicknessLabel" Text="2" Foreground="White" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                </DockPanel>
+                <Slider x:Name="ThicknessSlider" Minimum="1" Maximum="10" Value="2" ValueChanged="SettingsChanged"/>
 
                 <!-- Actions -->
                 <Button Content="Exit Application" 
                         Background="#442222" 
                         Foreground="White" 
-                        BorderThickness="0" 
-                        Padding="5" 
-                        Margin="0,10,0,0" 
+                        BorderThickness="1" 
+                        BorderBrush="#663333"
+                        Height="32"
+                        Margin="0,20,0,0" 
                         Click="ExitButton_Click">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="3"/>
+                            <Setter Property="CornerRadius" Value="4"/>
                         </Style>
                     </Button.Resources>
                 </Button>
 
-                <TextBlock Text="Press [Home] to Hide" Foreground="#666666" FontSize="10" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                <TextBlock Text="Press [Home] to Hide Menu" 
+                           Foreground="#666666" 
+                           FontSize="10" 
+                           Margin="0,15,0,0" 
+                           HorizontalAlignment="Center"
+                           FontStyle="Italic"/>
             </StackPanel>
         </Border>
     </Grid>
