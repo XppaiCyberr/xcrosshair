@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -70,10 +71,12 @@ namespace xcrosshair
             {
                 if (SizeSlider == null || ThicknessSlider == null || PositionComboBox == null) return;
 
-                SizeSlider.Value = _settings.Size;
-                ThicknessSlider.Value = _settings.Thickness;
+                var profile = _settings.CurrentProfile;
+                SizeSlider.Value = profile.Size;
+                ThicknessSlider.Value = profile.Thickness;
 
                 UpdateColorSelectionInUI();
+                PopulateProfiles();
 
                 foreach (ComboBoxItem item in PositionComboBox.Items)
                 {
@@ -84,10 +87,15 @@ namespace xcrosshair
                     }
                 }
 
-                if (!string.IsNullOrEmpty(_settings.ValorantProfileCode))
+                if (!string.IsNullOrEmpty(profile.ValorantProfileCode))
                 {
-                    ValorantCodeBox.Text = _settings.ValorantProfileCode;
-                    _valorantProfile = ValorantProfile.Parse(_settings.ValorantProfileCode);
+                    ValorantCodeBox.Text = profile.ValorantProfileCode;
+                    _valorantProfile = ValorantProfile.Parse(profile.ValorantProfileCode);
+                }
+                else
+                {
+                    ValorantCodeBox.Text = "";
+                    _valorantProfile = null;
                 }
             }
             catch (Exception ex)
@@ -102,10 +110,11 @@ namespace xcrosshair
             {
                 if (ColorComboBox == null) return;
 
+                var profile = _settings.CurrentProfile;
                 bool found = false;
                 foreach (ComboBoxItem item in ColorComboBox.Items)
                 {
-                    if (item.Tag?.ToString() == _settings.Color)
+                    if (item.Tag?.ToString() == profile.Color)
                     {
                         ColorComboBox.SelectedItem = item;
                         found = true;
@@ -113,9 +122,9 @@ namespace xcrosshair
                     }
                 }
 
-                if (!found && !string.IsNullOrEmpty(_settings.Color) && _settings.Color.StartsWith("#"))
+                if (!found && !string.IsNullOrEmpty(profile.Color) && profile.Color.StartsWith("#"))
                 {
-                    var customItem = new ComboBoxItem { Content = $"Custom ({_settings.Color})", Tag = _settings.Color };
+                    var customItem = new ComboBoxItem { Content = $"Custom ({profile.Color})", Tag = profile.Color };
                     int insertIndex = Math.Max(0, ColorComboBox.Items.Count - 1);
                     ColorComboBox.Items.Insert(insertIndex, customItem);
                     ColorComboBox.SelectedItem = customItem;
@@ -125,6 +134,28 @@ namespace xcrosshair
             {
                 LogError("UpdateColorSelectionInUI", ex);
             }
+        }
+
+        private void PopulateProfiles()
+        {
+            if (ProfileComboBox == null) return;
+            
+            _isLoaded = false; // Temporarily disable change events
+            ProfileComboBox.Items.Clear();
+            foreach (var profile in _settings.Profiles)
+            {
+                ProfileComboBox.Items.Add(new ComboBoxItem { Content = profile.Name, Tag = profile.Name });
+            }
+
+            foreach (ComboBoxItem item in ProfileComboBox.Items)
+            {
+                if (item.Tag?.ToString() == _settings.CurrentProfileName)
+                {
+                    ProfileComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+            _isLoaded = true;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -302,17 +333,20 @@ namespace xcrosshair
 
         private void ColorComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!_isLoaded) return;
             if (HorizontalLine == null || VerticalLine == null) return;
             if (ColorComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
                 var tag = item.Tag.ToString();
+                var profile = _settings.CurrentProfile;
+
                 if (tag == "Custom")
                 {
                     using (var dialog = new System.Windows.Forms.ColorDialog())
                     {
                         try 
                         {
-                            var currentColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(_settings.Color);
+                            var currentColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(profile.Color);
                             dialog.Color = System.Drawing.Color.FromArgb(currentColor.A, currentColor.R, currentColor.G, currentColor.B);
                         } catch {}
 
@@ -320,7 +354,7 @@ namespace xcrosshair
                         {
                             var color = dialog.Color;
                             string hex = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-                            _settings.Color = hex;
+                            profile.Color = hex;
                             _settings.Save();
                             
                             UpdateColorSelectionInUI();
@@ -334,12 +368,9 @@ namespace xcrosshair
                     return;
                 }
 
-                if (_isLoaded)
-                {
-                    _settings.Color = tag ?? "Lime";
-                    _settings.Save();
-                }
-                ApplyColor(_settings.Color);
+                profile.Color = tag ?? "Lime";
+                _settings.Save();
+                ApplyColor(profile.Color);
             }
         }
 
@@ -359,8 +390,9 @@ namespace xcrosshair
         {
             if (!_isLoaded) return;
 
-            _settings.Size = SizeSlider.Value;
-            _settings.Thickness = ThicknessSlider.Value;
+            var profile = _settings.CurrentProfile;
+            profile.Size = SizeSlider.Value;
+            profile.Thickness = ThicknessSlider.Value;
             _settings.Save();
 
             UpdateCrosshairLayout();
@@ -540,7 +572,7 @@ namespace xcrosshair
             if (string.IsNullOrEmpty(code)) return;
 
             _valorantProfile = ValorantProfile.Parse(code);
-            _settings.ValorantProfileCode = code;
+            _settings.CurrentProfile.ValorantProfileCode = code;
             _settings.Save();
             UpdateCrosshairLayout();
         }
@@ -548,7 +580,7 @@ namespace xcrosshair
         private void ClearValorantCode_Click(object sender, RoutedEventArgs e)
         {
             _valorantProfile = null;
-            _settings.ValorantProfileCode = "";
+            _settings.CurrentProfile.ValorantProfileCode = "";
             ValorantCodeBox.Text = "";
             _settings.Save();
             UpdateCrosshairLayout();
@@ -560,11 +592,52 @@ namespace xcrosshair
             {
                 System.Windows.Clipboard.SetText(_valorantProfile.ToCode());
             }
-            else
+        }
+
+        private void ProfileComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            if (ProfileComboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
             {
-                // Optionally generate a code from simple settings, but VALORANT format is complex.
-                // For now, just alert or do nothing.
+                string profileName = item.Tag.ToString()!;
+                _settings.CurrentProfileName = profileName;
+                _settings.Save();
+                ApplySettings();
+                UpdateCrosshairLayout();
             }
+        }
+
+        private void NewProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            string name = "Profile " + (_settings.Profiles.Count + 1);
+            _settings.Profiles.Add(new CrosshairProfile { Name = name });
+            _settings.CurrentProfileName = name;
+            _settings.Save();
+            ApplySettings();
+            UpdateCrosshairLayout();
+        }
+
+        private void DeleteProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_settings.Profiles.Count <= 1) return;
+
+            var toDelete = _settings.CurrentProfile;
+            _settings.Profiles.Remove(toDelete);
+            _settings.CurrentProfileName = _settings.Profiles.First().Name;
+            _settings.Save();
+            ApplySettings();
+            UpdateCrosshairLayout();
+        }
+
+        private void SaveAsProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            string newName = "Profile " + (_settings.Profiles.Count + 1);
+            var newProfile = _settings.CurrentProfile.Clone(newName);
+            _settings.Profiles.Add(newProfile);
+            _settings.CurrentProfileName = newName;
+            _settings.Save();
+            ApplySettings();
+            UpdateCrosshairLayout();
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
