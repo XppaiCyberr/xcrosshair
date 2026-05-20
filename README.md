@@ -29,6 +29,31 @@ A minimalist, high-performance crosshair overlay for Windows built with C# and W
    dotnet run
    ```
 
+## Changelog
+
+### v1.3.0
+- **Multi-Profile Management**: Create, save, and switch between multiple crosshair configurations.
+- **Save As/Clone**: Easily duplicate existing profiles.
+- **Documentation**: Added `GEMINI.md` for better context.
+
+### v1.2.0
+- **VALORANT Support**: Added ability to import and parse VALORANT crosshair profile codes.
+- **Enhanced Rendering**: Support for dots, inner lines, and outer lines from VALORANT profiles.
+
+### v1.1.0
+- **UI Redesign**: New dark-themed minimalist settings menu.
+- **Persistence**: Settings are now saved to `%AppData%`.
+- **Custom Color Picker**: Added support for any custom hex color.
+- **Stability**: Improved fullscreen compatibility and docking options.
+
+### v1.0.1
+- **DPI Scaling**: Fixed crosshair positioning on high-DPI displays.
+- **Bug Fixes**: Improved stability when toggling the menu.
+
+### v1.0.0
+- **Initial Release**: Basic crosshair overlay with hotkey support and click-through.
+- **Auto-Release**: Integrated GitHub Actions for automated builds.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
